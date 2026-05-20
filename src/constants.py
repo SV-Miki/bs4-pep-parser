@@ -25,3 +25,17 @@ EXPECTED_STATUS = {
 PEP_STATUS_OUTPUT = ('Статус', 'Количество')
 
 TOTAL_STATUS = 'Total'
+
+LOG_FORMAT = '"%(asctime)s - [%(levelname)s] - %(message)s"'
+DT_FORMAT = '%d.%m.%Y %H:%M:%S'
+
+PRETTY_OUTPUT = 'pretty'
+FILE_OUTPUT = 'file'
+
+LOG_DIR = BASE_DIR / 'logs'
+LOG_FILE = LOG_DIR / 'parser.log'
+
+RESULTS_DIR = 'results'
+DOWNLOADS_DIR = 'downloads'
+
+DEFAULT_ENCODING = 'utf-8'

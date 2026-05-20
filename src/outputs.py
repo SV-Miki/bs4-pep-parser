@@ -6,19 +6,25 @@ import logging
 
 from prettytable import PrettyTable
 
-from constants import BASE_DIR, DATETIME_FORMAT
+
+from constants import (
+    BASE_DIR,
+    DATETIME_FORMAT,
+    FILE_OUTPUT,
+    PRETTY_OUTPUT,
+    RESULTS_DIR,
+)
 
 
 def control_output(results, cli_args):
     """Выбирает способ вывода результатов парсинга."""
-    output = cli_args.output
+    output_methods = {
+        PRETTY_OUTPUT: pretty_output,
+        FILE_OUTPUT: lambda data: file_output(data, cli_args),
+        None: default_output,
+    }
 
-    if output == 'pretty':
-        pretty_output(results)
-    elif output == 'file':
-        file_output(results, cli_args)
-    else:
-        default_output(results)
+    output_methods[cli_args.output](results)
 
 
 def default_output(results):
@@ -38,11 +44,12 @@ def pretty_output(results):
 
 def file_output(results, cli_args):
     """Сохраняет результаты парсинга в CSV-файл."""
-    results_dir = BASE_DIR / 'results'
-    results_dir.mkdir(exist_ok=True)
-
     parser_mode = cli_args.mode
     now_formatted = dt.datetime.now().strftime(DATETIME_FORMAT)
+
+    results_dir = BASE_DIR / RESULTS_DIR
+    results_dir.mkdir(exist_ok=True)
+
     file_name = f'{parser_mode}_{now_formatted}.csv'
     file_path = results_dir / file_name
 
