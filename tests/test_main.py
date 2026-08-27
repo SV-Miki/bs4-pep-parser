@@ -140,3 +140,35 @@ def test_mode_to_function():
             'В модуле `main.py` в объекте `MODE_TO_FUNCTION` '
             f'нет значения {func}'
         )
+
+
+def test_build_pep_results():
+    status_counter = {
+        'Active': 2,
+        'Final': 3,
+    }
+
+    assert main.build_pep_results(status_counter) == [
+        ('Статус', 'Количество'),
+        ('Active', 2),
+        ('Final', 3),
+        ('Total', 5),
+    ]
+
+
+def test_status_mismatch():
+    assert main.get_status_mismatch(
+        'https://peps.python.org/pep-0008/',
+        'Active',
+        ('Active', 'Accepted'),
+    ) is None
+
+    mismatch = main.get_status_mismatch(
+        'https://peps.python.org/pep-0401/',
+        'April Fool!',
+        ('Rejected',),
+    )
+
+    assert 'pep-0401' in mismatch
+    assert 'April Fool!' in mismatch
+    assert 'Rejected' in mismatch

@@ -54,3 +54,14 @@ def test_get_response(mock_session):
             'делает запрос к странице и возвращает ответ. \n'
             'Кстати: You are breathtaken!'
         )
+
+
+def test_get_response_http_error(mock_session):
+    with requests_mock.Mocker() as mock:
+        url = MAIN_DOC_URL + 'unexisting_page/'
+        mock.get(url, status_code=404)
+
+        with pytest.raises(ConnectionError) as excinfo:
+            utils.get_response(mock_session, url)
+
+        assert url in str(excinfo.value)

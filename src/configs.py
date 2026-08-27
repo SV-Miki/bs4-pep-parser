@@ -45,6 +45,7 @@ def configure_logging():
         LOG_FILE,
         maxBytes=10 ** 6,
         backupCount=5,
+        encoding='utf-8',
     )
 
     logging.basicConfig(

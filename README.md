@@ -1,106 +1,105 @@
-# Проект парсинга pep
+# bs4_parser_pep
 
-## Описание проекта
+Парсер документации Python и документов PEP.
 
-bs4_parser_pep - парсер документации Python и документов PEP.
+## Возможности
 
 Проект позволяет:
+
 - получать список изменений Python из раздела What's New
-- получать список актуальных версий Python и их статусы
-- скачивать архив документации Python
+- получать список доступных версий Python и их статусы
+- скачивать архив HTML-документации Python
 - собирать данные обо всех PEP
-- сравнивать статусы PEP из общей таблицы и страницы документа
+- сравнивать статус PEP из общей таблицы со статусом на странице документа
 - подсчитывать количество PEP по каждому статусу
-- сохранять результаты парсинга в CSV-файлы
+- сохранять результаты парсинга в CSV
 - выводить результаты в терминал или в формате PrettyTable
 - использовать кеширование HTTP-запросов
 - логировать работу парсера и найденные несовпадения статусов
 
-
 ## Технологии
-
-В проекте используются:
 
 - Python 3.12
 - BeautifulSoup4
 - Requests
-- Requests-cache
-- Lxml
+- Requests Cache
+- lxml
 - PrettyTable
-- Tqdm
-- Pytest
+- tqdm
+- pytest
 - Flake8
-
 
 ## Запуск проекта
 
 ### 1. Клонировать репозиторий
 
 ```bash
-git clone <URL_репозитория>
-```
-
-```bash
+git clone git@github.com:SV-Miki/bs4_parser_pep.git
 cd bs4_parser_pep
 ```
 
-### 2. Создать и активировать виртуальное окружение
+### 2. Создать виртуальное окружение
 
 ```bash
 python3 -m venv venv
 ```
 
-#### Linux/macOS
+### 3. Активировать виртуальное окружение
+
+Linux/macOS:
 
 ```bash
 source venv/bin/activate
 ```
 
-#### Windows
+Windows PowerShell:
 
-```bash
-source venv/Scripts/activate
+```powershell
+venv\Scripts\Activate.ps1
 ```
 
-### 3. Установить зависимости
+Windows CMD:
+
+```cmd
+venv\Scripts\activate.bat
+```
+
+### 4. Установить зависимости
 
 ```bash
 python -m pip install --upgrade pip
-```
-
-```bash
 pip install -r requirements.txt
 ```
 
-## Режимы работы парсера
+## Режимы работы
 
-### whats-new
+### `whats-new`
 
-Парсит раздел What's New в документации Python.
+Парсит раздел What's New документации Python и выводит ссылки на статьи, заголовки и информацию об авторах или редакторах.
 
 ```bash
 python src/main.py whats-new
 ```
 
-### latest-versions
+### `latest-versions`
 
-Выводит список версий Python и их статусы.
+Выводит список доступных версий Python и их статусы.
 
 ```bash
 python src/main.py latest-versions
 ```
 
-### download
+### `download`
 
-Скачивает архив документации Python.
+Скачивает ZIP-архив HTML-документации Python в директорию `src/downloads`.
 
 ```bash
 python src/main.py download
 ```
 
-### pep
+### `pep`
 
-Парсит документы PEP, собирает статистику по статусам и проверяет несовпадения статусов.
+Парсит документы PEP, собирает статистику по статусам и проверяет несовпадения между общей таблицей и страницами отдельных PEP.
 
 ```bash
 python src/main.py pep
@@ -108,33 +107,85 @@ python src/main.py pep
 
 ## Дополнительные аргументы
 
-### Очистка кеша
+Очистить HTTP-кеш перед запуском:
 
 ```bash
 python src/main.py pep -c
 ```
 
-### Вывод в формате PrettyTable
+Вывести результат в формате PrettyTable:
 
 ```bash
 python src/main.py pep -o pretty
 ```
 
-### Сохранение результатов в CSV
+Сохранить результат в CSV:
 
 ```bash
 python src/main.py pep -o file
 ```
 
-## Пример CSV-файла
+Доступные параметры можно посмотреть через:
 
-| Статус   | Количество |
-|----------|-----------|
-| Active   | 38        |
-| Final    | 354       |
-| Rejected | 130       |
-| Draft    | 45        |
-| Total    | 726       |
+```bash
+python src/main.py --help
+```
+
+## Пример результата PEP-парсера
+
+```text
+Статус Количество
+Active 38
+Withdrawn 71
+Superseded 25
+Final 374
+Rejected 131
+Deferred 36
+April Fool! 1
+Accepted 11
+Draft 50
+Total 737
+```
+
+При несовпадении статуса в общей таблице и на странице PEP информация сохраняется в лог. Для подсчёта используется фактический статус со страницы документа.
+
+## Результаты
+
+CSV-файлы PEP-парсера сохраняются в директорию:
+
+```text
+src/results/
+```
+
+Пример структуры файла:
+
+```csv
+"Статус","Количество"
+"Active","38"
+"Withdrawn","71"
+"Superseded","25"
+"Final","374"
+"Rejected","131"
+"Deferred","36"
+"April Fool!","1"
+"Accepted","11"
+"Draft","50"
+"Total","737"
+```
+
+## Проверка проекта
+
+Запуск тестов:
+
+```bash
+pytest
+```
+
+Проверка стиля кода:
+
+```bash
+flake8 src
+```
 
 ## Автор
 

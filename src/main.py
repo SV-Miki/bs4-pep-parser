@@ -6,40 +6,28 @@ from collections import Counter
 from urllib.parse import urljoin
 
 import requests_cache
-from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 from configs import configure_argument_parser, configure_logging
 from constants import (
     BASE_DIR,
+    DOWNLOADS_DIR,
     EXPECTED_STATUS,
     MAIN_DOC_URL,
     PEP_NUMERICAL_INDEX_URL,
     PEP_STATUS_OUTPUT,
     PEP_URL,
     TOTAL_STATUS,
-    DOWNLOADS_DIR,
 )
-from outputs import control_output
-from utils import find_tag, get_response
 from exceptions import ParserFindTagException
-
-
-def get_soup(session, url):
-    """Возвращает объект BeautifulSoup для указанной страницы."""
-    response = get_response(session, url)
-    return BeautifulSoup(response.text, 'lxml')
+from outputs import control_output
+from utils import find_tag, get_response, get_soup
 
 
 def whats_new(session):
     """Парсит раздел What's New документации Python."""
     whats_new_url = urljoin(MAIN_DOC_URL, 'whatsnew/')
-
-    try:
-        soup = get_soup(session, whats_new_url)
-    except ConnectionError as error:
-        logging.error(error)
-        return
+    soup = get_soup(session, whats_new_url)
 
     main_div = find_tag(
         soup,
@@ -57,33 +45,38 @@ def whats_new(session):
     )
 
     results = [('Ссылка на статью', 'Заголовок', 'Редактор, автор')]
+    errors = []
 
     for section in tqdm(sections_by_python):
-        version_a_tag = find_tag(section, 'a')
-        version_link = urljoin(whats_new_url, version_a_tag['href'])
-
         try:
+            version_a_tag = find_tag(section, 'a')
+            version_link = urljoin(
+                whats_new_url,
+                version_a_tag['href'],
+            )
+
             soup = get_soup(session, version_link)
-        except ConnectionError as error:
-            logging.error(error)
-            continue
+            h1 = find_tag(soup, 'h1')
+            dl = find_tag(soup, 'dl')
+            dl_text = dl.get_text(' ', strip=True)
 
-        h1 = find_tag(soup, 'h1')
-        dl = find_tag(soup, 'dl')
-        dl_text = dl.get_text(' ', strip=True)
+            results.append((version_link, h1.text, dl_text))
 
-        results.append((version_link, h1.text, dl_text))
+        except (
+            ConnectionError,
+            ParserFindTagException,
+        ) as error:
+            errors.append(error)
+
+    for error in errors:
+        logging.error(error)
 
     return results
 
 
 def latest_versions(session):
     """Парсит список версий Python и их статусов."""
-    try:
-        soup = get_soup(session, MAIN_DOC_URL)
-    except ConnectionError as error:
-        logging.error(error)
-        return
+    soup = get_soup(session, MAIN_DOC_URL)
 
     sidebar = find_tag(
         soup,
@@ -119,12 +112,7 @@ def latest_versions(session):
 def download(session):
     """Скачивает архив документации Python."""
     downloads_url = urljoin(MAIN_DOC_URL, 'download.html')
-
-    try:
-        soup = get_soup(session, downloads_url)
-    except ConnectionError as error:
-        logging.error(error)
-        return
+    soup = get_soup(session, downloads_url)
 
     main_tag = find_tag(
         soup,
@@ -150,16 +138,14 @@ def download(session):
     downloads_dir.mkdir(exist_ok=True)
 
     archive_path = downloads_dir / filename
-    try:
-        response = get_response(session, archive_url)
-    except ConnectionError as error:
-        logging.error(error)
-        return
+    response = get_response(session, archive_url)
 
     with open(archive_path, 'wb') as file:
         file.write(response.content)
 
-    logging.info(f'Архив был загружен и сохранён: {archive_path}')
+    logging.info(
+        f'Архив был загружен и сохранён: {archive_path}'
+    )
 
 
 def get_pep_status(pep_soup, pep_link):
@@ -186,15 +172,21 @@ def get_pep_status(pep_soup, pep_link):
     return status_dd.get_text(strip=True)
 
 
-def log_status_mismatch(pep_link, real_status, expected_statuses):
-    """Логирует несовпадение статусов PEP."""
-    if real_status not in expected_statuses:
-        logging.info(
-            'Несовпадающие статусы:\n'
-            f'{pep_link}\n'
-            f'Статус в карточке: {real_status}\n'
-            f'Ожидаемые статусы: {list(expected_statuses)}'
-        )
+def get_status_mismatch(
+    pep_link,
+    real_status,
+    expected_statuses,
+):
+    """Возвращает сообщение о несовпадении статусов PEP."""
+    if real_status in expected_statuses:
+        return None
+
+    return (
+        'Несовпадающие статусы:\n'
+        f'{pep_link}\n'
+        f'Статус в карточке: {real_status}\n'
+        f'Ожидаемые статусы: {list(expected_statuses)}'
+    )
 
 
 def parse_pep_row(row):
@@ -202,10 +194,14 @@ def parse_pep_row(row):
     columns = row.find_all('td')
 
     if not columns:
-        raise ValueError('В строке таблицы отсутствуют теги td')
+        raise ValueError(
+            'В строке таблицы отсутствуют теги td'
+        )
 
     first_column_tag = columns[0]
-    preview_status = first_column_tag.get_text(strip=True)[1:]
+    preview_status = first_column_tag.get_text(
+        strip=True
+    )[1:]
 
     pep_number_tag = find_tag(row, 'a')
     pep_number = pep_number_tag.get_text(strip=True)
@@ -213,7 +209,10 @@ def parse_pep_row(row):
     if pep_number == '0':
         raise ValueError('PEP 0 не должен обрабатываться')
 
-    pep_link = urljoin(PEP_URL, pep_number_tag['href'])
+    pep_link = urljoin(
+        PEP_URL,
+        pep_number_tag['href'],
+    )
 
     return preview_status, pep_link
 
@@ -231,39 +230,45 @@ def build_pep_results(status_counter):
 
 def pep(session):
     """Парсит статусы документов PEP."""
-    try:
-        soup = get_soup(session, PEP_NUMERICAL_INDEX_URL)
-    except ConnectionError as error:
-        logging.error(error)
-        return
+    soup = get_soup(
+        session,
+        PEP_NUMERICAL_INDEX_URL,
+    )
 
     table_tag = find_tag(
         soup,
         'table',
-        attrs={'class': 'pep-zero-table docutils align-default'},
+        attrs={
+            'class': (
+                'pep-zero-table docutils align-default'
+            )
+        },
     )
 
     status_counter = Counter()
     errors = []
+    status_mismatches = []
 
     for row in tqdm(table_tag.find_all('tr')[1:]):
         try:
             preview_status, pep_link = parse_pep_row(row)
-
             pep_soup = get_soup(session, pep_link)
 
             real_status = get_pep_status(
                 pep_soup,
                 pep_link,
             )
+            expected_statuses = EXPECTED_STATUS[
+                preview_status
+            ]
 
-            expected_statuses = EXPECTED_STATUS[preview_status]
-
-            log_status_mismatch(
+            mismatch = get_status_mismatch(
                 pep_link,
                 real_status,
                 expected_statuses,
             )
+            if mismatch is not None:
+                status_mismatches.append(mismatch)
 
             status_counter[real_status] += 1
 
@@ -273,7 +278,9 @@ def pep(session):
             ParserFindTagException,
         ) as error:
             errors.append(error)
-            continue
+
+    for mismatch in status_mismatches:
+        logging.info(mismatch)
 
     for error in errors:
         logging.error(error)
@@ -311,7 +318,6 @@ def main():
             session.cache.clear()
 
         parser_mode = args.mode
-
         results = MODE_TO_FUNCTION[parser_mode](session)
 
         if results is not None:

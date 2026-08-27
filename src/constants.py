@@ -10,7 +10,7 @@ PEP_NUMERICAL_INDEX_URL = 'https://peps.python.org/numerical/'
 
 
 # Базовые пути проекта.
-BASE_DIR = Path(__file__).parent
+BASE_DIR = Path(__file__).resolve().parent
 RESULTS_DIR = 'results'
 DOWNLOADS_DIR = 'downloads'
 
