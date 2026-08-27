@@ -1,4 +1,4 @@
-# bs4_parser_pep
+# bs4-pep-parser
 
 Парсер документации Python и документов PEP.
 
@@ -32,7 +32,7 @@
 ## Структура проекта
 
 ```text
-bs4_parser_pep/
+bs4-pep-parser/
 ├── src/
 │   ├── main.py
 │   ├── configs.py
@@ -54,8 +54,8 @@ bs4_parser_pep/
 ### 1. Клонировать репозиторий
 
 ```bash
-git clone git@github.com:SV-Miki/bs4_parser_pep.git
-cd bs4_parser_pep
+git clone git@github.com:SV-Miki/bs4-pep-parser.git
+cd bs4-pep-parser
 ```
 
 ### 2. Создать виртуальное окружение
