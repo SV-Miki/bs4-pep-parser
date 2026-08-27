@@ -29,6 +29,26 @@
 - pytest
 - Flake8
 
+## Структура проекта
+
+```text
+bs4_parser_pep/
+├── src/
+│   ├── main.py
+│   ├── configs.py
+│   ├── constants.py
+│   ├── exceptions.py
+│   ├── outputs.py
+│   ├── utils.py
+│   ├── downloads/
+│   ├── logs/
+│   └── results/
+├── tests/
+├── requirements.txt
+├── pytest.ini
+└── .flake8
+```
+
 ## Запуск проекта
 
 ### 1. Клонировать репозиторий
